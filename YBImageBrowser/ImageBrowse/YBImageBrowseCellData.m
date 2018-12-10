@@ -87,8 +87,15 @@ static BOOL _shouldDecodeAsynchronously = YES;
     [YBIBPhotoAlbumManager getPhotoAlbumAuthorizationSuccess:^{
         if ([self.image respondsToSelector:@selector(animatedImageData)] && self.image.animatedImageData) {
             [YBIBPhotoAlbumManager saveDataToAlbum:self.image.animatedImageData];
-        } else if (self.image) {
-            [YBIBPhotoAlbumManager saveImageToAlbum:self.image];
+        } else if (self.image && self.extraData) {
+            //            [YBIBPhotoAlbumManager saveImageToAlbum:self.image];
+            NSObject *object = self.extraData;
+            NSString *mediaName = [object valueForKey:@"mediaName"];
+            // 图片、视频缓存目录
+            NSString *cacheUrlString = [[NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES) firstObject] stringByAppendingPathComponent:@"HDSharingImages"];
+            NSString *urlString = [cacheUrlString stringByAppendingPathComponent:mediaName];
+            NSURL *url = [NSURL URLWithString:urlString];
+            [YBIBPhotoAlbumManager saveImageToAlbumWihtUrl:url];
         } else if (self.url) {
             [YBIBWebImageManager queryCacheOperationForKey:self.url completed:^(UIImage * _Nullable image, NSData * _Nullable data) {
                 if (data) {

@@ -33,4 +33,6 @@
 
 + (void)saveVideoToAlbumWithPath:(NSString *)path;
 
++ (void)saveImageToAlbumWihtUrl:(NSURL *)url;
+
 @end
