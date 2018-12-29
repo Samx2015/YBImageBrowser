@@ -559,7 +559,9 @@
             if (self->_topBar) self.topBar.hidden = YES;
             
             if ([UIApplication sharedApplication].statusBarOrientation != self->_statusBarOrientationBefore) {
-                self.yb_browserDismissBlock();
+                if (self->_layoutDirection != YBImageBrowserLayoutDirectionHorizontal) {
+                    self.yb_browserDismissBlock();
+                }
             } else {
                 self->_gestureInteractionStartPoint = point;
                 
