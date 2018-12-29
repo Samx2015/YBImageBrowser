@@ -265,7 +265,9 @@
         // START
         if (shouldStart) {
             if ([UIApplication sharedApplication].statusBarOrientation != self->_statusBarOrientationBefore) {
-                self.yb_browserDismissBlock();
+                if (self->_layoutDirection != YBImageBrowserLayoutDirectionHorizontal) {
+                    self.yb_browserDismissBlock();
+                }
             } else {
                 [self hideTailoringImageView];
                 
@@ -441,8 +443,29 @@
     
     CGRect imageViewFrame = [self.cellData.class getImageViewFrameWithContainerSize:containerSize imageSize:imageSize fillType:fillType];
     
+    if (self->_layoutDirection == YBImageBrowserLayoutDirectionHorizontal) {
+        
+        CGFloat mainScreenWidth  = [UIScreen mainScreen].bounds.size.width;
+        CGFloat mainScreenHeight = [UIScreen mainScreen].bounds.size.height;
+        
+        CGSize size;
+        if (imageSize.height > mainScreenHeight) {
+            size = CGSizeMake(imageSize.width / (imageSize.height / mainScreenHeight), mainScreenHeight);
+        }
+        if (size.width > mainScreenWidth) {
+            size = CGSizeMake(mainScreenWidth, size.height / (size.width / mainScreenWidth));
+        }
+        
+        imageViewFrame = CGRectMake(mainScreenWidth / 2 - size.width / 2, mainScreenHeight / 2 - size.height / 2, size.width, size.height);
+        self.mainContentView.contentSize = CGSizeMake(mainScreenWidth, mainScreenHeight);
+        self.mainContentView.scrollEnabled = NO;
+    }else {
+        
+        self.mainContentView.contentSize = [self.cellData.class getContentSizeWithContainerSize:containerSize imageViewFrame:imageViewFrame];
+        self.mainContentView.scrollEnabled = YES;
+    }
+    
     self.mainContentView.zoomScale = 1;
-    self.mainContentView.contentSize = [self.cellData.class getContentSizeWithContainerSize:containerSize imageViewFrame:imageViewFrame];
     self.mainContentView.minimumZoomScale = 1;
     self.mainContentView.maximumZoomScale = 1;
     if (self.cellData.image) {
