@@ -90,6 +90,8 @@ When the image exceeds this texture size, it will be compressed asynchronously a
  If the image decoding lead to interactive caton, you can set it to YES. When decoding asynchronously, there will be more time consumption. */
 @property (nonatomic, class) BOOL shouldDecodeAsynchronously;
 
+@property (nonatomic, assign) BOOL isHDImageVideo;
+
 @end
 
 NS_ASSUME_NONNULL_END

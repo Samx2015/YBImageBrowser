@@ -90,7 +90,7 @@ static BOOL _shouldDecodeAsynchronously = YES;
         } else if (self.image && self.extraData) {
             //            [YBIBPhotoAlbumManager saveImageToAlbum:self.image];
             NSObject *object = self.extraData;
-            NSString *mediaName = [object valueForKey:@"mediaName"];
+            NSString *mediaName = [object valueForKey:self.isHDImageVideo ? @"mediaName" : @"thumbImageName"];
             // 图片、视频缓存目录
             NSString *cacheUrlString = [[NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES) firstObject] stringByAppendingPathComponent:@"HDSharingImages"];
             NSString *urlString = [cacheUrlString stringByAppendingPathComponent:mediaName];
