@@ -119,6 +119,9 @@ typedef NS_ENUM(NSInteger, YBImageBrowserTransitionType) {
 /** The number of data cache limits, the default is 6. It is effective when using the proxy to configure data sources. If the data cache is overmuch, may lead to excessive memory consumption. */
 @property (nonatomic, assign) NSUInteger dataCacheCountLimit;
 
+// 进入图片浏览器之前的Contrller名称
+@property (nonatomic, copy) NSString *fromViewControllerString;
+
 @end
 
 NS_ASSUME_NONNULL_END

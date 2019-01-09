@@ -337,22 +337,43 @@
 #pragma mark - <YBImageBrowserViewDelegate>
 
 - (void)yb_imageBrowserViewDismiss:(YBImageBrowserView *)browserView {
-    [self.toolBars enumerateObjectsUsingBlock:^(__kindof UIView<YBImageBrowserToolBarProtocol> * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-        obj.hidden = YES;
-    }];
-    
-    if ([UIApplication sharedApplication].statusBarOrientation != self->_statusBarOrientationBefore && [[UIDevice currentDevice] respondsToSelector:@selector(setOrientation:)]) {
-        SEL selector = NSSelectorFromString(@"setOrientation:");
-        NSInvocation *invocation = [NSInvocation invocationWithMethodSignature:[UIDevice instanceMethodSignatureForSelector:selector]];
-        [invocation setSelector:selector];
-        [invocation setTarget:[UIDevice currentDevice]];
-        NSInteger val = self->_statusBarOrientationBefore;
-        [invocation setArgument:&val atIndex:2];
-        self->_isRestoringDeviceOrientation = YES;
-        [invocation invoke];
+    if ([self.fromViewControllerString isEqualToString:@"HDSHomeDetailController"] || [self.fromViewControllerString isEqualToString:@"HDSHomeShareDetailController"]) {
+        // 如果是从两个详情里进入的图片浏览然后点击了图片
+        
+        UIInterfaceOrientation interfaceOritation = [[UIApplication sharedApplication] statusBarOrientation];
+        [self.toolBars enumerateObjectsUsingBlock:^(__kindof UIView<YBImageBrowserToolBarProtocol> * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+            
+            if (interfaceOritation == UIInterfaceOrientationLandscapeLeft || interfaceOritation == UIInterfaceOrientationLandscapeRight) {
+                
+                // 如果是横屏状态下，底部的备注栏此时已经隐藏了，需要让底部的备注栏保持原状
+                NSString *className = NSStringFromClass([obj class]);
+                if (![className isEqualToString:@"HDSImageBrowserBottomBar"]) {
+                    obj.hidden = !obj.hidden;
+                }
+            }else {
+                obj.hidden = !obj.hidden;
+            }
+        }];
+    }else {
+        // 如果是从其他的页面进入的图片浏览然后点击了图片
+        
+        [self.toolBars enumerateObjectsUsingBlock:^(__kindof UIView<YBImageBrowserToolBarProtocol> * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+            obj.hidden = YES;
+        }];
+        
+        if ([UIApplication sharedApplication].statusBarOrientation != self->_statusBarOrientationBefore && [[UIDevice currentDevice] respondsToSelector:@selector(setOrientation:)]) {
+            SEL selector = NSSelectorFromString(@"setOrientation:");
+            NSInvocation *invocation = [NSInvocation invocationWithMethodSignature:[UIDevice instanceMethodSignatureForSelector:selector]];
+            [invocation setSelector:selector];
+            [invocation setTarget:[UIDevice currentDevice]];
+            NSInteger val = self->_statusBarOrientationBefore;
+            [invocation setArgument:&val atIndex:2];
+            self->_isRestoringDeviceOrientation = YES;
+            [invocation invoke];
+        }
+        
+        [self hide];
     }
-    
-    [self hide];
 }
 
 - (void)yb_imageBrowserView:(YBImageBrowserView *)browserView changeAlpha:(CGFloat)alpha duration:(NSTimeInterval)duration {
