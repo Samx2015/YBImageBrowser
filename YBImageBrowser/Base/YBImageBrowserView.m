@@ -11,7 +11,6 @@
 #import "YBImageBrowserViewLayout.h"
 #import "YBIBUtilities.h"
 #import "YBImageBrowserCellDataProtocol.h"
-#import "YBImageBrowserCellProtocol.h"
 
 static NSInteger const preloadCount = 2;
 
@@ -187,9 +186,9 @@ static NSInteger const preloadCount = 2;
     
     if ([cell respondsToSelector:@selector(setYb_browserDismissBlock:)]) {
         __weak typeof(self) wSelf = self;
-        [cell setYb_browserDismissBlock:^{
+        [cell setYb_browserDismissBlock:^(YBImageBrowserDismissTriggerType type) {
             __strong typeof(wSelf) sSelf = wSelf;
-            [sSelf.yb_delegate yb_imageBrowserViewDismiss:sSelf];
+            [sSelf.yb_delegate yb_imageBrowserViewDismiss:sSelf triggerType:type];
         }];
     }
     
@@ -234,7 +233,7 @@ static NSInteger const preloadCount = 2;
 }
 
 #pragma mark - <UIScrollViewDelegate>
- 
+
 - (void)scrollViewDidScroll:(UIScrollView *)scrollView {
     CGFloat indexF = scrollView.contentOffset.x / scrollView.bounds.size.width;
     NSUInteger index = (NSUInteger)(indexF + 0.5);

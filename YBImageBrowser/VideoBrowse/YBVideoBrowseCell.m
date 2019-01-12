@@ -198,7 +198,8 @@
 #pragma mark - <YBVideoBrowseTopBarDelegate>
 
 - (void)yb_videoBrowseTopBar:(YBVideoBrowseTopBar *)topBar clickCancelButton:(UIButton *)button {
-    self.yb_browserDismissBlock();
+    // 点击叉号也需要跟手势一样的处理
+    self.yb_browserDismissBlock(YBImageBrowserDismissTriggerTypeWithGesture);
 }
 
 #pragma mark - private
@@ -490,7 +491,7 @@
             break;
         case AVAudioSessionRouteChangeReasonOldDeviceUnavailable:
             if (self->_player && self->_isPlaying) {
-//                [self->_player pause];
+                //                [self->_player pause];
                 [self.actionBar pause];
             }
             break;
@@ -516,7 +517,7 @@
         self.actionBar.hidden = !self.actionBar.isHidden;
         self.topBar.hidden = !self.topBar.isHidden;
     } else {
-        self.yb_browserDismissBlock();
+        self.yb_browserDismissBlock(YBImageBrowserDismissTriggerTypeWithClick);
     }
 }
 
@@ -539,7 +540,7 @@
             
             BOOL shouldDismiss = distanceArrive || velocityArrive;
             if (shouldDismiss) {
-                self.yb_browserDismissBlock();
+                self.yb_browserDismissBlock(YBImageBrowserDismissTriggerTypeWithGesture);
             } else {
                 [self restoreGestureInteractionWithDuration:self->_giProfile.restoreDuration];
             }
@@ -560,7 +561,7 @@
             
             if ([UIApplication sharedApplication].statusBarOrientation != self->_statusBarOrientationBefore) {
                 if (self->_layoutDirection != YBImageBrowserLayoutDirectionHorizontal) {
-                    self.yb_browserDismissBlock();
+                    self.yb_browserDismissBlock(YBImageBrowserDismissTriggerTypeWithGesture);
                 }
             } else {
                 self->_gestureInteractionStartPoint = point;

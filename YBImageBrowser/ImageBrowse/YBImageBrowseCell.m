@@ -201,7 +201,7 @@
 }
 
 - (void)respondsToTapSingle:(UITapGestureRecognizer *)tap {
-    self.yb_browserDismissBlock();
+    self.yb_browserDismissBlock(YBImageBrowserDismissTriggerTypeWithClick);
 }
 
 - (void)respondsToTapDouble:(UITapGestureRecognizer *)tap {
@@ -245,7 +245,7 @@
             
             BOOL shouldDismiss = distanceArrive || velocityArrive;
             if (shouldDismiss) {
-                self.yb_browserDismissBlock();
+                self.yb_browserDismissBlock(YBImageBrowserDismissTriggerTypeWithGesture);
             } else {
                 [self restoreGestureInteractionWithDuration:self->_giProfile.restoreDuration];
             }
@@ -266,7 +266,7 @@
         if (shouldStart) {
             if ([UIApplication sharedApplication].statusBarOrientation != self->_statusBarOrientationBefore) {
                 if (self->_layoutDirection != YBImageBrowserLayoutDirectionHorizontal) {
-                    self.yb_browserDismissBlock();
+                    self.yb_browserDismissBlock(YBImageBrowserDismissTriggerTypeWithGesture);
                 }
             } else {
                 [self hideTailoringImageView];
@@ -345,7 +345,7 @@
 - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSKeyValueChangeKey,id> *)change context:(void *)context {
     if (object == self.cellData && [keyPath isEqualToString:@"dataState"]) {
         [self cellDataStateChanged];
-    } 
+    }
 }
 
 #pragma mark - private

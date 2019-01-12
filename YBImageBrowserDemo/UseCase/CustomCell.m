@@ -30,7 +30,7 @@
 }
 
 - (void)respondsToTapGesture {
-    self.yb_browserDismissBlock();
+    self.yb_browserDismissBlock(YBImageBrowserDismissTriggerTypeWithClick);
 }
 
 #pragma mark - private

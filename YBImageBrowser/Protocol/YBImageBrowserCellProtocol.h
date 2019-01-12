@@ -13,6 +13,13 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+typedef NS_ENUM(NSUInteger, YBImageBrowserDismissTriggerType) {
+    
+    YBImageBrowserDismissTriggerTypeWithClick = 0,
+    
+    YBImageBrowserDismissTriggerTypeWithGesture
+};
+
 @protocol YBImageBrowserCellProtocol <NSObject>
 
 @required
@@ -23,7 +30,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)yb_browserLayoutDirectionChanged:(YBImageBrowserLayoutDirection)layoutDirection containerSize:(CGSize)containerSize;
 
-@property (nonatomic, copy) void(^yb_browserDismissBlock)(void);
+@property (nonatomic, copy) void(^yb_browserDismissBlock)(YBImageBrowserDismissTriggerType type);
 
 @property (nonatomic, copy) void(^yb_browserToolBarHiddenBlock)(BOOL hidden);
 

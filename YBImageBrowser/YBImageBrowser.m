@@ -105,9 +105,9 @@
         [self.browserView scrollToPageWithIndex:self->_currentIndex];
         
         [self addSubViews];
- 
+        
         self->_isFirstViewDidAppear = YES;
-
+        
         [self addObserverForSystem];
     }
 }
@@ -336,8 +336,9 @@
 
 #pragma mark - <YBImageBrowserViewDelegate>
 
-- (void)yb_imageBrowserViewDismiss:(YBImageBrowserView *)browserView {
-    if ([self.fromViewControllerString isEqualToString:@"HDSHomeDetailController"] || [self.fromViewControllerString isEqualToString:@"HDSHomeShareDetailController"]) {
+- (void)yb_imageBrowserViewDismiss:(YBImageBrowserView *)browserView triggerType:(YBImageBrowserDismissTriggerType)triggerType {
+    // YBImageBrowserDismissTriggerTypeWithClick 当前事件触发类型是点击触发的才进行处理
+    if (([self.fromViewControllerString isEqualToString:@"HDSHomeDetailController"] || [self.fromViewControllerString isEqualToString:@"HDSHomeShareDetailController"]) && triggerType == YBImageBrowserDismissTriggerTypeWithClick) {
         // 如果是从两个详情里进入的图片浏览然后点击了图片
         
         UIInterfaceOrientation interfaceOritation = [[UIApplication sharedApplication] statusBarOrientation];

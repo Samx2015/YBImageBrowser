@@ -11,6 +11,7 @@
 #import "YBIBLayoutDirectionManager.h"
 #import "YBIBUtilities.h"
 #import "YBIBGestureInteractionProfile.h"
+#import "YBImageBrowserCellProtocol.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -18,7 +19,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @required
 
-- (void)yb_imageBrowserViewDismiss:(YBImageBrowserView *)browserView;
+- (void)yb_imageBrowserViewDismiss:(YBImageBrowserView *)browserView triggerType:(YBImageBrowserDismissTriggerType)triggerType;
 
 - (void)yb_imageBrowserView:(YBImageBrowserView *)browserView changeAlpha:(CGFloat)alpha duration:(NSTimeInterval)duration;
 
