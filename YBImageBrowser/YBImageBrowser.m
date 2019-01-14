@@ -398,9 +398,12 @@
 }
 
 - (void)yb_imageBrowserView:(YBImageBrowserView *)browserView hideTooBar:(BOOL)hidden {
-    [self.toolBars enumerateObjectsUsingBlock:^(__kindof UIView<YBImageBrowserToolBarProtocol> * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-        obj.hidden = hidden;
-    }];
+    // 19-01-14改动
+    // 每次滑动过程会重置hideTooBar的hidden，现在因为有点击显示/隐藏功能了所以不需要重置hidden了
+//    [self.toolBars enumerateObjectsUsingBlock:^(__kindof UIView<YBImageBrowserToolBarProtocol> * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+//        obj.hidden = hidden;
+//    }];
+    
     if (self.sheetView && self.sheetView.superview && hidden) {
         [self.sheetView yb_browserHideSheetViewWithAnimation:YES];
     }
