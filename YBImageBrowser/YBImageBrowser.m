@@ -398,11 +398,25 @@
 }
 
 - (void)yb_imageBrowserView:(YBImageBrowserView *)browserView hideTooBar:(BOOL)hidden {
-    // 19-01-14改动
-    // 每次滑动过程会重置hideTooBar的hidden，现在因为有点击显示/隐藏功能了所以不需要重置hidden了
-//    [self.toolBars enumerateObjectsUsingBlock:^(__kindof UIView<YBImageBrowserToolBarProtocol> * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-//        obj.hidden = hidden;
-//    }];
+    // 19-01-14的改动
+    // 只有在视频开始播放/播放结束时才去进行隐藏和显示
+    NSArray *array = [NSThread callStackSymbols];
+    if (array.count > 2) {
+        NSString *methodString = array[2];
+        if ([methodString containsString:@"avPlayerItemStatusChanged"]) {
+            [self.toolBars enumerateObjectsUsingBlock:^(__kindof UIView<YBImageBrowserToolBarProtocol> * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+                obj.hidden = YES;
+            }];
+        }
+        if (array.count > 4) {
+            NSString *videoFinishString = array[4];
+            if ([videoFinishString containsString:@"videoPlayFinish"]) {
+                [self.toolBars enumerateObjectsUsingBlock:^(__kindof UIView<YBImageBrowserToolBarProtocol> * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+                    obj.hidden = NO;
+                }];
+            }
+        }
+    }
     
     if (self.sheetView && self.sheetView.superview && hidden) {
         [self.sheetView yb_browserHideSheetViewWithAnimation:YES];
