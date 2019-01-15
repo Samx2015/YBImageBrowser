@@ -173,6 +173,7 @@
 - (void)addSubViews {
     [self.view addSubview:self.browserView];
     [self.toolBars enumerateObjectsUsingBlock:^(__kindof UIView<YBImageBrowserToolBarProtocol> * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        obj.alpha = 0.0f;
         [self.view addSubview:obj];
         if ([obj respondsToSelector:@selector(setYb_browserShowSheetViewBlock:)]) {
             __weak typeof(self) wSelf = self;
@@ -184,6 +185,10 @@
                 }
             }];
         }
+        // 防止顶部闪烁，添加动画
+        [UIView animateWithDuration:0.35f animations:^{
+            obj.alpha = 1.0f;
+        }];
     }];
 }
 
