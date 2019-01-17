@@ -257,12 +257,15 @@ static NSInteger const preloadCount = 2;
         [self.yb_delegate yb_imageBrowserView:self pageIndexChanged:self.currentIndex];
         
         // Notice 'visibleCells' page index changed.
-        NSArray<UICollectionViewCell<YBImageBrowserCellProtocol> *> *cells = [self visibleCells];
-        [cells enumerateObjectsUsingBlock:^(UICollectionViewCell<YBImageBrowserCellProtocol> * _Nonnull cell, NSUInteger idx, BOOL * _Nonnull stop) {
-            if ([cell respondsToSelector:@selector(yb_browserPageIndexChanged:ownIndex:)]) {
-                [cell yb_browserPageIndexChanged:self.currentIndex ownIndex:[self indexPathForCell:cell].row];
-            }
-        }];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            // 此处必须异步加载，否则初次点击时visibleCells方法即使获取到的Cell永远是第0个cell
+            NSArray<UICollectionViewCell<YBImageBrowserCellProtocol> *> *cells = [self visibleCells];
+            [cells enumerateObjectsUsingBlock:^(UICollectionViewCell<YBImageBrowserCellProtocol> * _Nonnull cell, NSUInteger idx, BOOL * _Nonnull stop) {
+                if ([cell respondsToSelector:@selector(yb_browserPageIndexChanged:ownIndex:)]) {
+                    [cell yb_browserPageIndexChanged:self.currentIndex ownIndex:[self indexPathForCell:cell].row];
+                }
+            }];
+        });
     }
 }
 
