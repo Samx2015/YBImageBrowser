@@ -2,22 +2,20 @@
 //  YBImageBrowser+Internal.h
 //  YBImageBrowserDemo
 //
-//  Created by 波儿菜 on 2019/7/1.
-//  Copyright © 2019 杨波. All rights reserved.
+//  Created by 杨波 on 2018/9/7.
+//  Copyright © 2018年 杨波. All rights reserved.
 //
 
 #import "YBImageBrowser.h"
-#import "YBIBContainerView.h"
+#import "YBImageBrowserView.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
 @interface YBImageBrowser ()
 
-@property (nonatomic, strong) YBIBContainerView *containerView;
+@property (nonatomic, strong) YBImageBrowserView *browserView;
 
-- (void)implementGetBaseInfoProtocol:(id<YBIBGetBaseInfoProtocol>)obj;
-
-@property (nonatomic, weak, nullable) NSObject *hiddenProjectiveView;
+@property (nonatomic, weak, nullable) id hiddenSourceObject;
 
 @end
 

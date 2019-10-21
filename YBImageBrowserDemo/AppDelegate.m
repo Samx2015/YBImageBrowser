@@ -2,12 +2,12 @@
 //  AppDelegate.m
 //  YBImageBrowserDemo
 //
-//  Created by 波儿菜 on 2019/6/5.
-//  Copyright © 2019 波儿菜. All rights reserved.
+//  Created by 杨少 on 2018/4/10.
+//  Copyright © 2018年 杨波. All rights reserved.
 //
 
 #import "AppDelegate.h"
-#import "MainController.h"
+#import "MainViewController.h"
 #import "MainNavigationController.h"
 
 @interface AppDelegate ()
@@ -18,20 +18,26 @@
 
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
-    MainController *vc = [MainController new];
-    
-    MainNavigationController *nvc = [[MainNavigationController alloc] initWithRootViewController:vc];
-    nvc.navigationBar.translucent = NO;
-
+    MainViewController *vc = [MainViewController new];
+    MainNavigationController *nav = [[MainNavigationController alloc] initWithRootViewController:vc];
+    nav.navigationBar.translucent = NO;
     _window = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
-    _window.rootViewController = nvc;
+    _window.rootViewController = nav;
     [_window makeKeyAndVisible];
     return YES;
 }
 
-- (UIInterfaceOrientationMask)application:(UIApplication *)application supportedInterfaceOrientationsForWindow:(UIWindow *)window {
-    return UIInterfaceOrientationMaskAll;
-}
+//- (UIInterfaceOrientationMask)application:(UIApplication *)application supportedInterfaceOrientationsForWindow:(UIWindow *)window {
+//    if ([window.rootViewController isKindOfClass:UINavigationController.class]) {
+//        UINavigationController *nav = (UINavigationController *)window.rootViewController;
+//        UIViewController *target = nav.topViewController;
+//        while (target.presentedViewController)
+//            target = target.presentedViewController;
+//        if ([target isKindOfClass:NSClassFromString(@"YBImageBrowser")])
+//            return UIInterfaceOrientationMaskAllButUpsideDown;
+//    }
+//    return UIInterfaceOrientationMaskPortrait;
+//}
 
 - (void)applicationWillResignActive:(UIApplication *)application {
     // Sent when the application is about to move from active to inactive state. This can occur for certain types of temporary interruptions (such as an incoming phone call or SMS message) or when the user quits the application and it begins the transition to the background state.
