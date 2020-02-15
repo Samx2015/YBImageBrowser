@@ -9,11 +9,10 @@
 #import "YBIBVideoCell.h"
 #import "YBIBVideoData.h"
 #import "YBIBVideoData+Internal.h"
-#import "YBIBVideoView.h"
 #import "YBIBCopywriter.h"
 #import "YBIBIconManager.h"
 #import <objc/runtime.h>
-
+#import "YBIBVideoCell+Internal.h"
 
 @interface NSObject (YBIBVideoPlayingRecord)
 - (void)ybib_videoPlayingAdd:(NSObject *)obj;
@@ -43,7 +42,6 @@
 
 
 @interface YBIBVideoCell () <YBIBVideoDataDelegate, YBIBVideoViewDelegate, UIGestureRecognizerDelegate>
-@property (nonatomic, strong) YBIBVideoView *videoView;
 @end
 
 @implementation YBIBVideoCell {
@@ -118,6 +116,7 @@
 
 - (void)hideBrowser {
     ((YBIBVideoData *)self.yb_cellData).delegate = nil;
+    self.videoView.thumbImageView.hidden = NO;
     self.videoView.autoPlayCount = 0;
     [self.videoView reset];
     [self.videoView hideToolBar:YES];
@@ -220,6 +219,10 @@
 }
 
 - (void)yb_videoData:(YBIBVideoData *)data readyForThumbImage:(UIImage *)image {
+    if (!self.videoView.isPlaying) {
+        self.videoView.thumbImageView.hidden = NO;
+    }
+    
     if (!self.videoView.thumbImageView.image) {
         CGSize previousSize = self.videoView.thumbImageView.image.size;
         self.videoView.thumbImageView.image = image;
@@ -252,6 +255,7 @@
 }
 
 - (void)yb_startPlayForVideoView:(YBIBVideoView *)view {
+    self.videoView.thumbImageView.hidden = YES;
     [self.yb_backView ybib_videoPlayingAdd:self];
     [self.yb_auxiliaryViewHandler() yb_hideLoadingWithContainer:self];
     [self hideToolViews:YES];
@@ -369,7 +373,7 @@
         } else {
             
             // Start
-            if (CGPointEqualToPoint(_interactStartPoint, CGPointZero) || self.yb_currentPage() != self.yb_selfPage() || !self.yb_cellIsInCenter()) return;
+            if (CGPointEqualToPoint(_interactStartPoint, CGPointZero) || self.yb_currentPage() != self.yb_selfPage() || !self.yb_cellIsInCenter() || self.videoView.actionBar.isTouchInside) return;
             
             CGPoint velocityPoint = [pan velocityInView:self.videoView];
             CGFloat triggerDistance = profile.triggerDistance;

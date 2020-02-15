@@ -17,8 +17,6 @@
 @property (nonatomic, strong) YBIBVideoTopBar *topBar;
 @property (nonatomic, strong) YBIBVideoActionBar *actionBar;
 @property (nonatomic, strong) UIButton *playButton;
-@property (nonatomic, assign, getter=isPlaying) BOOL playing;
-@property (nonatomic, assign, getter=isPlayFailed) BOOL playFailed;
 @end
 
 @implementation YBIBVideoView {
@@ -59,6 +57,7 @@
     _needAutoPlay = NO;
     _autoPlayCount = 0;
     _playFailed = NO;
+    _preparingPlay = NO;
 }
 
 #pragma mark - public
@@ -103,6 +102,8 @@
 - (void)videoJumpWithScale:(float)scale {
     CMTime startTime = CMTimeMakeWithSeconds(scale, _player.currentTime.timescale);
     AVPlayer *tmpPlayer = _player;
+    
+    if (CMTIME_IS_INDEFINITE(startTime) || CMTIME_IS_INVALID(startTime)) return;
     [_player seekToTime:startTime toleranceBefore:CMTimeMake(1, 1000) toleranceAfter:CMTimeMake(1, 1000) completionHandler:^(BOOL finished) {
         if (finished && tmpPlayer == self->_player) {
             [self startPlay];
@@ -111,6 +112,7 @@
 }
 
 - (void)preparPlay {
+    _preparingPlay = YES;
     _playFailed = NO;
     
     self.playButton.hidden = YES;
@@ -133,7 +135,7 @@
 
 - (void)startPlay {
     if (_player) {
-        self.playing = YES;
+        _playing = YES;
         
         [_player play];
         [self.actionBar play];
@@ -150,7 +152,9 @@
     [self.actionBar setCurrentValue:0];
     self.actionBar.hidden = YES;
     self.topBar.hidden = YES;
-    self.playing = NO;
+    
+    _playing = NO;
+    
     [self.delegate yb_finishPlayForVideoView:self];
 }
 
@@ -227,12 +231,16 @@
 - (void)playerItemStatusChanged {
     if (!_active) return;
     
+    _preparingPlay = NO;
+    
     switch (_playerItem.status) {
         case AVPlayerItemStatusReadyToPlay: {
-            [self startPlay];
-            
-            double max = CMTimeGetSeconds(_playerItem.duration);
-            [self.actionBar setMaxValue:isnan(max) || isinf(max) ? 0 : max];
+            // Delay to update UI.
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.15 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                [self startPlay];
+                double max = CMTimeGetSeconds(self->_playerItem.duration);
+                [self.actionBar setMaxValue:(isnan(max) || isinf(max)) ? 0 : max];
+            });
         }
             break;
         case AVPlayerItemStatusUnknown: {
@@ -281,17 +289,15 @@
 }
 
 - (void)audioRouteChangeListenerCallback:(NSNotification*)notification {
-    NSDictionary *interuptionDict = notification.userInfo;
-    NSInteger routeChangeReason = [[interuptionDict valueForKey:AVAudioSessionRouteChangeReasonKey] integerValue];
-    switch (routeChangeReason) {
-        case AVAudioSessionRouteChangeReasonNewDeviceAvailable:
-            break;
-        case AVAudioSessionRouteChangeReasonOldDeviceUnavailable:
-            [self playerPause];
-            break;
-        case AVAudioSessionRouteChangeReasonCategoryChange:
-            break;
-    }
+    YBIB_DISPATCH_ASYNC_MAIN(^{
+        NSDictionary *interuptionDict = notification.userInfo;
+        NSInteger routeChangeReason = [[interuptionDict valueForKey:AVAudioSessionRouteChangeReasonKey] integerValue];
+        switch (routeChangeReason) {
+            case AVAudioSessionRouteChangeReasonOldDeviceUnavailable:
+                [self playerPause];
+                break;
+        }
+    })
 }
 
 #pragma mark - event

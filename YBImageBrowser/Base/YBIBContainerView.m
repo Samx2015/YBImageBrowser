@@ -11,12 +11,12 @@
 @implementation YBIBContainerView
 
 - (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event {
-    for (UIView *subView in self.subviews.reverseObjectEnumerator) {
-        CGPoint subPoint = [self convertPoint:point toView:subView];
-        UIView *view = [subView hitTest:subPoint withEvent:event];
-        if (view && !view.isHidden && view.alpha > 0 && view.userInteractionEnabled) return view;
+    UIView *originView = [super hitTest:point withEvent:event];
+    if ([originView isKindOfClass:self.class]) {
+        // Continue hit-testing if the view is kind of 'self.class'.
+        return nil;
     }
-    return nil;
+    return originView;
 }
 
 @end

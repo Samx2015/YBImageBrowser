@@ -21,11 +21,10 @@
 @property (nonatomic, strong) YBIBCollectionView *collectionView;
 @property (nonatomic, strong) YBIBDataMediator *dataMediator;
 @property (nonatomic, strong) YBIBScreenRotationHandler *rotationHandler;
-@property (nonatomic, assign) BOOL transitioning;
 @end
 
 @implementation YBImageBrowser {
-     UIWindowLevel _originWindowLevel;
+    BOOL _originStatusBarHidden;
 }
 
 #pragma mark - life cycle
@@ -47,7 +46,7 @@
 }
 
 - (void)initValue {
-    _transitioning = NO;
+    _transitioning = _showTransitioning = _hideTransitioning = NO;
     _defaultAnimatedTransition = _animatedTransition = [YBIBAnimatedTransition new];
     _toolViewHandlers = @[[YBIBToolViewHandler new]];
     _defaultToolViewHandler = _toolViewHandlers[0];
@@ -137,13 +136,13 @@
 
 - (void)showStatusBar {
     if (self.shouldHideStatusBar) {
-        self.window.windowLevel = _originWindowLevel;
+        [UIApplication sharedApplication].statusBarHidden = _originStatusBarHidden;
     }
 }
 
 - (void)hideStatusBar {
     if (self.shouldHideStatusBar) {
-        self.window.windowLevel = UIWindowLevelStatusBar + 1;
+        [UIApplication sharedApplication].statusBarHidden = YES;
     }
 }
 
@@ -164,8 +163,7 @@
     self.frame = view.bounds;
     self.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
     
-    _originWindowLevel = self.window.windowLevel;
-    [self hideStatusBar];
+    _originStatusBarHidden = [UIApplication sharedApplication].isStatusBarHidden;
     
     [self.rotationHandler configContainerSize:containerSize];
     
@@ -188,10 +186,11 @@
         endFrame = [data yb_imageViewFrameWithContainerSize:self.bounds.size imageSize:startImage.size orientation:self.rotationHandler.currentOrientation];
     }
     
-    self.transitioning = YES;
+    [self setTransitioning:YES isShow:YES];
     [self.animatedTransition yb_showTransitioningWithContainer:self startView:startView startImage:startImage endFrame:endFrame orientation:self.rotationHandler.currentOrientation completion:^{
-        self.transitioning = NO;
+        [self hideStatusBar];
         [self build];
+        [self setTransitioning:NO isShow:YES];
     }];
 }
 
@@ -211,11 +210,11 @@
     }
     [self showStatusBar];
     
-    self.transitioning = YES;
+    [self setTransitioning:YES isShow:NO];
     [self.animatedTransition yb_hideTransitioningWithContainer:self startView:startView endView:endView orientation:self.rotationHandler.currentOrientation completion:^{
         [self rebuild];
         [self removeFromSuperview];
-        self.transitioning = NO;
+        [self setTransitioning:NO isShow:NO];
     }];
 }
 
@@ -354,6 +353,20 @@
             return self.isTransitioning;
         }];
     }
+    if ([obj respondsToSelector:@selector(setYb_isShowTransitioning:)]) {
+        [obj setYb_isShowTransitioning:^BOOL{
+            __strong typeof(wSelf) self = wSelf;
+            if (!self) return NO;
+            return self.isShowTransitioning;
+        }];
+    }
+    if ([obj respondsToSelector:@selector(setYb_isHideTransitioning:)]) {
+        [obj setYb_isHideTransitioning:^BOOL{
+            __strong typeof(wSelf) self = wSelf;
+            if (!self) return NO;
+            return self.isHideTransitioning;
+        }];
+    }
     if ([obj respondsToSelector:@selector(setYb_isRotating:)]) {
         [obj setYb_isRotating:^BOOL{
             __strong typeof(wSelf) self = wSelf;
@@ -471,13 +484,15 @@
     return self.collectionView.layout.distanceBetweenPages;
 }
 
-- (void)setTransitioning:(BOOL)transitioning {
+- (void)setTransitioning:(BOOL)transitioning isShow:(BOOL)isShow {
     _transitioning = transitioning;
+    _showTransitioning = transitioning && isShow;
+    _hideTransitioning = transitioning && !isShow;
+    
     // Make 'self.userInteractionEnabled' always 'YES' to block external interaction.
     self.containerView.userInteractionEnabled = !transitioning;
     self.collectionView.userInteractionEnabled = !transitioning;
     
-    BOOL isShow = !(_collectionView && _collectionView.superview);
     if (transitioning) {
         if ([self.delegate respondsToSelector:@selector(yb_imageBrowser:beginTransitioningWithIsShow:)]) {
             [self.delegate yb_imageBrowser:self beginTransitioningWithIsShow:isShow];
