@@ -1,18 +1,19 @@
-# YBImageBrowser ( Latest version : 2.1.0 )
+# YBImageBrowser 2.x 使用说明
 
-<center>
-    <img src="https://github.com/indulgeIn/YBImageBrowser/blob/master/OtherDocuments/ybib_st_use.gif">
-</center>
+[![CocoaPods](https://img.shields.io/cocoapods/v/YBImageBrowser.svg)](https://cocoapods.org/pods/YBImageBrowser)&nbsp;
+[![CocoaPods](https://img.shields.io/cocoapods/p/YBImageBrowser.svg)](https://github.com/indulgeIn/YBImageBrowser)&nbsp;
+[![License](https://img.shields.io/github/license/indulgeIn/YBImageBrowser.svg)](https://github.com/indulgeIn/YBImageBrowser)&nbsp;
 
-![](https://github.com/indulgeIn/YBImageBrowser/blob/master/OtherDocuments/ybib_st_image.PNG)
-![](https://github.com/indulgeIn/YBImageBrowser/blob/master/OtherDocuments/ybib_st_video.jpg)
-![](https://github.com/indulgeIn/YBImageBrowser/blob/master/OtherDocuments/ybib_st_custom.PNG)
+
+# Preview
+
+![](https://github.com/indulgeIn/YBImageBrowser/blob/store_2.x/OtherDocuments/ybib_st_use.gif)
 
 
 # Link
 
 
-* Blog : [打造开源第一 iOS 图片浏览器 (支持视频)](https://www.jianshu.com/p/bffdb9f0036c)
+* Blog : [打造高性能 iOS 图片浏览器 (支持视频)](https://www.jianshu.com/p/bffdb9f0036c)
 
 * [中文介绍](#中文介绍)
 * [English Introduction](#english-introduction)
@@ -104,7 +105,7 @@ browser.currentIndex = ...;
 
 两种数据模型都有一个属性  `sourceObject`，该属性是该数据模型的对应的视图对象。举个例子，经典的朋友圈九宫格，`sourceObject` 可以是九宫格里面的九张图片，它的作用主要是做动效。
 
-![](https://github.com/indulgeIn/YBImageBrowser/blob/master/OtherDocuments/ybib_st_sourceObject.jpeg)
+![](https://github.com/indulgeIn/YBImageBrowser/blob/store_2.x/OtherDocuments/ybib_st_sourceObject.jpeg)
 
 ### 使用代理设置数据源（可解决内存峰值过高问题）
 
@@ -142,11 +143,6 @@ browser.currentIndex = index;
 `YBVideoBrowseCellData` 有一个属性设置缩略图：`firstFrame`。
 
 数据模型若设置了 `sourceObject`，并且 `sourceObject` 是 `UIImageView` 类型的，那么组件会自动将该图片作为 `thumbImage`，所以这种情况不需要另外设置缩略图了。
-
-
-### 关于预加载
-
-`YBImageBrowseCellData` 和 `YBVideoBrowseCellData` 都有一个方法 `-preload` ，顾名思义就是预加载，若你设置图片或视频过后调用了该方法，会预先处理数据并且缓存下来，否则，数据会在界面展示的时候处理。这是一个对用户体验的优化，可以让用户更流畅的浏览内容，但该方法会增加 CPU 的负担（虽然基本是异步执行的），所以若数据模型过多慎用该方法。
 
 
 ### 图片处理的一些配置
@@ -276,7 +272,7 @@ browser.currentIndex = ...;
 ```
 Two kinds of data model has a property ` sourceObject `, this property is the view object of the corresponding data model, its main role is to do dynamic effect.
 
-![](https://github.com/indulgeIn/YBImageBrowser/blob/master/OtherDocuments/ybib_st_sourceObject.jpeg)
+![](https://github.com/indulgeIn/YBImageBrowser/blob/store_2.x/OtherDocuments/ybib_st_sourceObject.jpeg)
 
 ### Set up the data source proxy
 
@@ -315,11 +311,6 @@ However, having a large amount of data in a image browser will increase the burd
 `YBVideoBrowseCellData ` has an attribute set the thumbnail image: ` firstFrame `.
 
 If the `sourceObject` is set in the data model and `sourceObject` is kind of  `UIImageView` , the component will set the image as a `thumbImage` automatically, so there is no need to set up another thumbnail image in this case.
-
-
-### About preloading
-
-Both `YBImageBrowseCellData` and `YBVideoBrowseCellData`  have a method `-preload`. If you call this method after setting up a picture or video, the data will be pre-processed and cached, otherwise, the data will be processed when the interface is displayed. This is an optimization of the user experience that allows users to browse content more smoothly, but this approach increases the CPU burden (albeit executed asynchronously) , so use this approach cautiously if the data model is too much.
 
 
 ### Some image configuration

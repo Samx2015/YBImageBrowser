@@ -12,10 +12,10 @@
 #import "YBImageBrowserCellProtocol.h"
 
 @interface YBIBTransitionManager () {
-    BOOL _isEnter;
+    BOOL _enter;
 }
 @property (nonatomic, strong) UIImageView *animateImageView;
-@property (nonatomic, assign) BOOL isTransitioning;
+@property (nonatomic, assign) BOOL transitioning;
 @end
 
 @implementation YBIBTransitionManager
@@ -25,8 +25,8 @@
 - (instancetype)init {
     self = [super init];
     if (self) {
-        self.isTransitioning = NO;
-        self->_isEnter = NO;
+        self.transitioning = NO;
+        _enter = NO;
     }
     return self;
 }
@@ -35,7 +35,7 @@
 
 - (void)animationEnded:(BOOL)transitionCompleted {
     if (self.imageBrowser && self.imageBrowser.delegate && [self.imageBrowser.delegate respondsToSelector:@selector(yb_imageBrowser:transitionAnimationEndedWithIsEnter:)]) {
-        [self.imageBrowser.delegate yb_imageBrowser:self.imageBrowser transitionAnimationEndedWithIsEnter:self->_isEnter];
+        [self.imageBrowser.delegate yb_imageBrowser:self.imageBrowser transitionAnimationEndedWithIsEnter:_enter];
     }
 }
 
@@ -52,8 +52,8 @@
     
     // Enter
     if (toController.isBeingPresented) {
-        self->_isEnter = YES;
-        self.isTransitioning = YES;
+        _enter = YES;
+        self.transitioning = YES;
         switch (self.imageBrowser.enterTransitionType) {
             case YBImageBrowserTransitionTypeNone: {
                 [containerView addSubview:toView];
@@ -99,48 +99,65 @@
     
     // Out
     if (fromController.isBeingDismissed) {
-        self->_isEnter = NO;
-        self.isTransitioning = YES;
-        switch (self.imageBrowser.outTransitionType) {
-            case YBImageBrowserTransitionTypeNone: {
+        
+        void(^noneBlock)(void) = ^{
+            [self completeTransition:transitionContext isEnter:NO];
+        };
+        
+        void(^fadeBlock)(void) = ^{
+            UIView *fromAnimateView = [self out_fromAnimateView];
+            [UIView animateWithDuration:[self transitionDuration:transitionContext] animations:^{
+                fromAnimateView.alpha = 0;
+                fromView.alpha = 0;
+            } completion:^(BOOL finished) {
                 [self completeTransition:transitionContext isEnter:NO];
-            }
-                break;
-            case YBImageBrowserTransitionTypeFade: {
-                UIView *fromAnimateView = [self out_fromAnimateView];
+            }];
+        };
+        
+        void(^coherentBlock)(void) = ^{
+            UIView *fromAnimateView = [self out_fromAnimateView];
+            if (fromAnimateView) {
+                CGRect fromFrame = fromAnimateView.frame;
+                CGRect toFrame = [self out_toFrameWithView:fromAnimateView.superview];
+                if (CGRectEqualToRect(toFrame, CGRectZero)) {
+                    fadeBlock();
+                    return;
+                }
+                
                 [UIView animateWithDuration:[self transitionDuration:transitionContext] animations:^{
-                    fromAnimateView.alpha = 0;
-                    fromView.alpha = 0;
+                    fromView.backgroundColor = [[UIColor blackColor] colorWithAlphaComponent:0];
+                    id sourceObj = [self out_toSourceObj];
+                    if ([sourceObj isKindOfClass:UIView.class])
+                        fromAnimateView.contentMode = ((UIImageView *)sourceObj).contentMode;
+                    
+                    if ([fromAnimateView isKindOfClass:UIImageView.class]) {
+                        fromAnimateView.frame = toFrame;
+                    } else {
+                        CGFloat scale = MAX(toFrame.size.width / fromFrame.size.width, toFrame.size.height / fromFrame.size.height);
+                        fromAnimateView.center = CGPointMake(toFrame.size.width * fromAnimateView.layer.anchorPoint.x + toFrame.origin.x, toFrame.size.height * fromAnimateView.layer.anchorPoint.y + toFrame.origin.y);;
+                        fromAnimateView.transform = CGAffineTransformScale(fromAnimateView.transform, scale, scale);
+                    }
                 } completion:^(BOOL finished) {
                     [self completeTransition:transitionContext isEnter:NO];
                 }];
+            } else {
+                [self completeTransition:transitionContext isEnter:NO];
+            }
+        };
+        
+        _enter = NO;
+        self.transitioning = YES;
+        switch (self.imageBrowser.outTransitionType) {
+            case YBImageBrowserTransitionTypeNone: {
+                noneBlock();
+            }
+                break;
+            case YBImageBrowserTransitionTypeFade: {
+                fadeBlock();
             }
                 break;
             case YBImageBrowserTransitionTypeCoherent: {
-                UIView *fromAnimateView = [self out_fromAnimateView];
-                if (fromAnimateView) {
-                    CGRect fromFrame = fromAnimateView.frame;
-                    CGRect toFrame = [self out_toFrameWithView:fromAnimateView.superview];
-                    [UIView animateWithDuration:[self transitionDuration:transitionContext] animations:^{
-                        
-                        fromView.backgroundColor = [[UIColor blackColor] colorWithAlphaComponent:0];
-                        id sourceObj = [self out_toSourceObj];
-                        if ([sourceObj isKindOfClass:UIView.class])
-                            fromAnimateView.contentMode = ((UIImageView *)sourceObj).contentMode;
-                        
-                        if ([fromAnimateView isKindOfClass:UIImageView.class]) {
-                            fromAnimateView.frame = toFrame;
-                        } else {
-                            CGFloat scale = MAX(toFrame.size.width / fromFrame.size.width, toFrame.size.height / fromFrame.size.height);
-                            fromAnimateView.center = CGPointMake(toFrame.size.width * fromAnimateView.layer.anchorPoint.x + toFrame.origin.x, toFrame.size.height * fromAnimateView.layer.anchorPoint.y + toFrame.origin.y);;
-                            fromAnimateView.transform = CGAffineTransformScale(fromAnimateView.transform, scale, scale);
-                        }
-                    } completion:^(BOOL finished) {
-                        [self completeTransition:transitionContext isEnter:NO];
-                    }];
-                } else {
-                    [self completeTransition:transitionContext isEnter:NO];
-                }
+                coherentBlock();
             }
                 break;
         }
@@ -149,7 +166,7 @@
 
 - (void)completeTransition:(nullable id <UIViewControllerContextTransitioning>)transitionContext isEnter:(BOOL)isEnter {
     [transitionContext completeTransition:!transitionContext.transitionWasCancelled];
-    self.isTransitioning = NO;
+    self.transitioning = NO;
     if (!isEnter) {
         self.imageBrowser.hiddenSourceObject = nil;
     }
@@ -163,34 +180,29 @@
     id<YBImageBrowserCellDataProtocol> data = [self.imageBrowser.browserView dataAtIndex:self.imageBrowser.currentIndex];
     if (!data) return NO;
     if (![data respondsToSelector:@selector(yb_browserCellSourceObject)]) return NO;
-    id sourceObj = data.yb_browserCellSourceObject;
-    if (!sourceObj) return NO;
+    UIView *sourceView = data.yb_browserCellSourceObject;
+    if (!sourceView) return NO;
     
-    self.imageBrowser.hiddenSourceObject = sourceObj;
+    self.imageBrowser.hiddenSourceObject = sourceView;
     
-    CALayer *sourceLayer = nil;
-    if ([sourceObj isKindOfClass:UIView.class]) {
-        UIView *view = (UIView *)sourceObj;
-        sourceLayer = view.layer;
-        self.animateImageView.contentMode = view.contentMode;
-        if ([view isKindOfClass:UIImageView.class]) {
-            self.animateImageView.image = ((UIImageView *)view).image;
+    // Read sources.
+    if ([sourceView isKindOfClass:UIView.class]) {
+        if ([sourceView isKindOfClass:UIImageView.class]) {
+            self.animateImageView.contentMode = sourceView.contentMode;
+            self.animateImageView.image = ((UIImageView *)sourceView).image;
         } else {
-            self.animateImageView.layer.contents = view.layer;
+            self.animateImageView.image = [YBIBUtilities snapsHotView:sourceView];
         }
-    } else if ([sourceObj isKindOfClass:CALayer.class]) {
-        sourceLayer = sourceObj;
-        self.animateImageView.layer.contents = sourceLayer.contents;
     } else {
         return NO;
     }
     
     // Ensure the best transition effect.
+    CALayer *sourceLayer = sourceView.layer;
     self.animateImageView.layer.masksToBounds = sourceLayer.masksToBounds;
     self.animateImageView.layer.cornerRadius = sourceLayer.cornerRadius;
     self.animateImageView.layer.backgroundColor = sourceLayer.backgroundColor;
-    
-    self.animateImageView.frame = [sourceObj convertRect:sourceLayer.bounds toView:YBIBGetNormalWindow()];
+    self.animateImageView.frame = [sourceView convertRect:sourceLayer.bounds toView:YBIBGetNormalWindow()];
     
     return YES;
 }
@@ -215,9 +227,7 @@
 }
 
 - (CGRect)out_toFrameWithView:(UIView *)view {
-    CGFloat width = [UIScreen mainScreen].bounds.size.width,
-    height = [UIScreen mainScreen].bounds.size.height;
-    CGRect frame = CGRectMake(width / 2, height / 2, 1, 1);
+    CGRect frame = CGRectZero;
     id sourceObj = [self out_toSourceObj];
     if (!sourceObj || ![sourceObj respondsToSelector:@selector(bounds)]) {
         return frame;

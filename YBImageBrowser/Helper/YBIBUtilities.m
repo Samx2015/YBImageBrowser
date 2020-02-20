@@ -24,19 +24,41 @@ UIWindow *YBIBGetNormalWindow(void) {
 }
 
 UIViewController *YBIBGetTopController(void) {
-    UIViewController *topController = nil;
     UIWindow *window = YBIBGetNormalWindow();
-    UIView *frontView = [[window subviews] objectAtIndex:0];
-    id nextResponder = [frontView nextResponder];
-    if ([nextResponder isKindOfClass:UIViewController.class]) {
-        topController = nextResponder;
+    if (!window) return nil;
+    
+    UIViewController *top = nil;
+    id nextResponder;
+    if (window.subviews.count > 0) {
+        UIView *frontView = [window.subviews objectAtIndex:0];
+        nextResponder = frontView.nextResponder;
+    }
+    if (nextResponder && [nextResponder isKindOfClass:UIViewController.class]) {
+        top = nextResponder;
     } else {
-        topController = window.rootViewController;
-        while (topController.presentedViewController) {
-            topController = topController.presentedViewController;
+        top = window.rootViewController;
+    }
+    
+    while ([top isKindOfClass:UITabBarController.class] || [top isKindOfClass:UINavigationController.class] || top.presentedViewController) {
+        if ([top isKindOfClass:UITabBarController.class]) {
+            top = ((UITabBarController *)top).selectedViewController;
+        } else if ([top isKindOfClass:UINavigationController.class]) {
+            top = ((UINavigationController *)top).topViewController;
+        } else if (top.presentedViewController) {
+            top = top.presentedViewController;
         }
     }
-    return topController;
+    return top;
+}
+
+BOOL YBIBLowMemory(void) {
+    static BOOL lowMemory = NO;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        unsigned long long physicalMemory = [[NSProcessInfo processInfo] physicalMemory];
+        lowMemory = physicalMemory > 0 && physicalMemory < 1024 * 1024 * 1500;
+    });
+    return lowMemory;
 }
 
 
@@ -58,11 +80,24 @@ UIViewController *YBIBGetTopController(void) {
     return isIphoneX;
 }
 
-+ (void)countTimeConsumingOfCode:(void(^)(void))code {
-    CFAbsoluteTime startTime = CFAbsoluteTimeGetCurrent();
-    code?code():nil;
-    CFAbsoluteTime linkTime = (CFAbsoluteTimeGetCurrent() - startTime);
-    YBIBLOG(@"TimeConsuming: %f ms", linkTime *1000.0);
++ (UIImage *)snapsHotView:(UIView *)view {
+    UIGraphicsBeginImageContextWithOptions(view.bounds.size, YES, [UIScreen mainScreen].scale);
+    [view drawViewHierarchyInRect:view.bounds afterScreenUpdates:NO];
+    UIImage *image = UIGraphicsGetImageFromCurrentImageContext();
+    UIGraphicsEndImageContext();
+    return image;
+}
+
++ (UIImage *)screenShotLayer:(CALayer *)layer {
+    UIImage *image = nil;
+    UIGraphicsBeginImageContextWithOptions(layer.frame.size, NO, [UIScreen mainScreen].scale);
+    [layer renderInContext:UIGraphicsGetCurrentContext()];
+    for (CALayer *subLayer in layer.sublayers) {
+        [subLayer renderInContext:UIGraphicsGetCurrentContext()];
+    }
+    image = UIGraphicsGetImageFromCurrentImageContext();
+    UIGraphicsEndImageContext();
+    return image;
 }
 
 @end

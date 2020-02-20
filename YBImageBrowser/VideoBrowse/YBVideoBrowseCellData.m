@@ -20,7 +20,7 @@
 @interface YBVideoBrowseCellData () <NSURLSessionDelegate> {
     NSURLSessionDownloadTask *_downloadTask;
 }
-@property (nonatomic, assign) BOOL isLoading;
+@property (nonatomic, assign) BOOL loading;
 @end
 
 @implementation YBVideoBrowseCellData
@@ -36,12 +36,12 @@
 }
 
 - (void)initVars {
-    self->_autoPlayCount = 0;
-    self->_allowSaveToPhotoAlbum = YES;
-    self->_allowShowSheetView = YES;
-    self->_dataState = YBVideoBrowseCellDataStateInvalid;
-    self->_dataDownloadState = YBVideoBrowseCellDataDownloadStateNone;
-    self->_isLoading = NO;
+    _autoPlayCount = 0;
+    _allowSaveToPhotoAlbum = YES;
+    _allowShowSheetView = YES;
+    _dataState = YBVideoBrowseCellDataStateInvalid;
+    _dataDownloadState = YBVideoBrowseCellDataDownloadStateNone;
+    _loading = NO;
 }
 
 #pragma mark - <YBImageBrowserCellDataProtocol>
@@ -50,7 +50,7 @@
     return YBVideoBrowseCell.class;
 }
 
-- (id)yb_browserCellSourceObject {
+- (UIView *)yb_browserCellSourceObject {
     return self.sourceObject;
 }
 
@@ -75,10 +75,10 @@
         } else if ([url.scheme containsString:@"http"]) {
             [self downloadWithUrl:url];
         } else {
-            [YBIBGetNormalWindow() yb_showForkTipView:[YBIBCopywriter shareCopywriter].videoIsInvalid];
+            [[UIApplication sharedApplication].keyWindow yb_showForkTipView:[YBIBCopywriter shareCopywriter].videoIsInvalid];
         }
     } else {
-        [YBIBGetNormalWindow() yb_showForkTipView:[YBIBCopywriter shareCopywriter].unableToSave];
+        [[UIApplication sharedApplication].keyWindow yb_showForkTipView:[YBIBCopywriter shareCopywriter].unableToSave];
     }
 }
 
@@ -89,11 +89,11 @@
 #pragma mark - internal
 
 - (void)loadData {
-    if (self.isLoading) {
+    if (self.loading) {
         self.dataState = self.dataState;
         return;
     } else {
-        self.isLoading = YES;
+        self.loading = YES;
     }
     
     if (self.avAsset) {
@@ -103,7 +103,7 @@
         [self loadAVAssetFromPHAsset];
     } else {
         self.dataState = YBVideoBrowseCellDataStateInvalid;
-        self.isLoading = NO;
+        self.loading = NO;
     }
 }
 
@@ -118,18 +118,18 @@
         [self loadFirstFrameOfVideo];
     } failed:^{
         self.dataState = YBVideoBrowseCellDataStateLoadPHAssetFailed;
-        self.isLoading = NO;
+        self.loading = NO;
     }];
 }
 
 - (BOOL)loadLocalFirstFrameOfVideo {
     if (self.firstFrame) {
         self.dataState = YBVideoBrowseCellDataStateFirstFrameReady;
-        self.isLoading = NO;
+        self.loading = NO;
     } else if (self.sourceObject && [self.sourceObject isKindOfClass:UIImageView.class] && ((UIImageView *)self.sourceObject).image) {
         self.firstFrame = ((UIImageView *)self.sourceObject).image;
         self.dataState = YBVideoBrowseCellDataStateFirstFrameReady;
-        self.isLoading = NO;
+        self.loading = NO;
     } else {
         return NO;
     }
@@ -152,12 +152,12 @@
         YBIB_GET_QUEUE_MAIN_ASYNC(^{
             if (error || !result) {
                 self.dataState = YBVideoBrowseCellDataStateLoadFirstFrameFailed;
-                self.isLoading = NO;
+                self.loading = NO;
             } else {
                 self.firstFrame = result;
                 self.dataState = YBVideoBrowseCellDataStateLoadFirstFrameSuccess;
                 self.dataState = YBVideoBrowseCellDataStateFirstFrameReady;
-                self.isLoading = NO;
+                self.loading = NO;
             }
         })
     })
@@ -204,8 +204,8 @@
     
     NSURLSessionConfiguration *config = [NSURLSessionConfiguration defaultSessionConfiguration];
     NSURLSession *session = [NSURLSession sessionWithConfiguration:config delegate:self delegateQueue:[NSOperationQueue mainQueue]];
-    self->_downloadTask = [session downloadTaskWithURL:url];
-    [self->_downloadTask resume];
+    _downloadTask = [session downloadTaskWithURL:url];
+    [_downloadTask resume];
 }
 
 #pragma mark - <NSURLSessionDelegate>
@@ -225,7 +225,7 @@ totalBytesExpectedToWrite:(int64_t)totalBytesExpectedToWrite {
 didCompleteWithError:(nullable NSError *)error {
     self.dataDownloadState = YBVideoBrowseCellDataDownloadStateComplete;
     if (error) {
-        [YBIBGetNormalWindow() yb_showForkTipView:@"下载失败"];
+        [[UIApplication sharedApplication].keyWindow yb_showForkTipView:[YBIBCopywriter shareCopywriter].downloadFailed];
     }
 }
 
@@ -234,20 +234,19 @@ didFinishDownloadingToURL:(NSURL *)location {
     NSString *cache = [NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES) lastObject];
     NSString *file = [cache stringByAppendingPathComponent:downloadTask.response.suggestedFilename];
     [[NSFileManager defaultManager] moveItemAtURL:location toURL:[NSURL fileURLWithPath:file] error:nil];
+    self.dataDownloadState = YBVideoBrowseCellDataDownloadStateComplete;
     if (UIVideoAtPathIsCompatibleWithSavedPhotosAlbum(file)) {
         UISaveVideoAtPathToSavedPhotosAlbum(file, self, @selector(video:didFinishSavingWithError:contextInfo:), nil);
     } else {
-        self.dataDownloadState = YBVideoBrowseCellDataDownloadStateComplete;
-        [YBIBGetNormalWindow() yb_showForkTipView:[YBIBCopywriter shareCopywriter].saveToPhotoAlbumFailed];
+        [[UIApplication sharedApplication].keyWindow yb_showForkTipView:[YBIBCopywriter shareCopywriter].saveToPhotoAlbumFailed];
     }
 }
 
 - (void)video:(NSString *)videoPath didFinishSavingWithError:(NSError *)error contextInfo:(void *)contextInfo {
-    self.dataDownloadState = YBVideoBrowseCellDataDownloadStateComplete;
     if (error) {
-        [YBIBGetNormalWindow() yb_showForkTipView:[YBIBCopywriter shareCopywriter].saveToPhotoAlbumFailed];
+        [[UIApplication sharedApplication].keyWindow yb_showForkTipView:[YBIBCopywriter shareCopywriter].saveToPhotoAlbumFailed];
     } else {
-        [YBIBGetNormalWindow() yb_showHookTipView:[YBIBCopywriter shareCopywriter].saveToPhotoAlbumSuccess];
+        [[UIApplication sharedApplication].keyWindow yb_showHookTipView:[YBIBCopywriter shareCopywriter].saveToPhotoAlbumSuccess];
     }
 }
 
@@ -255,7 +254,7 @@ didFinishDownloadingToURL:(NSURL *)location {
 
 - (void)setUrl:(NSURL *)url {
     _url = [url isKindOfClass:NSString.class] ? [NSURL URLWithString:(NSString *)url] : url;
-    self.avAsset = [AVURLAsset URLAssetWithURL:self->_url options:nil];
+    self.avAsset = [AVURLAsset URLAssetWithURL:_url options:nil];
 }
 
 @end

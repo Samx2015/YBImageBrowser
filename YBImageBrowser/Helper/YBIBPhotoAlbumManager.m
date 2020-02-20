@@ -15,7 +15,8 @@
 @implementation YBIBPhotoAlbumManager
 
 + (void)getAVAssetWithPHAsset:(PHAsset *)phAsset success:(void(^)(AVAsset *))success failed:(void(^)(void))failed {
-    PHVideoRequestOptions *options = [[PHVideoRequestOptions alloc] init];
+    PHVideoRequestOptions *options = [PHVideoRequestOptions new];
+    options.networkAccessAllowed = YES;
     [[PHImageManager defaultManager] requestAVAssetForVideo:phAsset options:options resultHandler:^(AVAsset * _Nullable asset, AVAudioMix * _Nullable audioMix, NSDictionary * _Nullable info) {
         YBIB_GET_QUEUE_MAIN_ASYNC(^{
             if (asset) {
@@ -28,10 +29,11 @@
 }
 
 + (void)getImageDataWithPHAsset:(PHAsset *)phAsset success:(void(^)(NSData *))success failed:(void(^)(void))failed {
-    PHImageRequestOptions *option = [[PHImageRequestOptions alloc] init];
-    option.resizeMode = PHImageRequestOptionsResizeModeNone;
-    option.synchronous = YES;
-    [[PHImageManager defaultManager] requestImageDataForAsset:phAsset options:option resultHandler:^(NSData * _Nullable imageData, NSString * _Nullable dataUTI, UIImageOrientation orientation, NSDictionary * _Nullable info) {
+    PHImageRequestOptions *options = [PHImageRequestOptions new];
+    options.networkAccessAllowed = YES;
+    options.resizeMode = PHImageRequestOptionsResizeModeNone;
+    options.synchronous = YES;
+    [[PHImageManager defaultManager] requestImageDataForAsset:phAsset options:options resultHandler:^(NSData * _Nullable imageData, NSString * _Nullable dataUTI, UIImageOrientation orientation, NSDictionary * _Nullable info) {
         BOOL complete = ![[info objectForKey:PHImageCancelledKey] boolValue] && ![info objectForKey:PHImageErrorKey] && ![[info objectForKey:PHImageResultIsDegradedKey] boolValue];
         if (complete && imageData) {
             if (success) success(imageData);
@@ -45,11 +47,11 @@
     PHAuthorizationStatus status = [PHPhotoLibrary authorizationStatus];
     switch (status) {
         case PHAuthorizationStatusDenied:
-            [YBIBGetNormalWindow() yb_showForkTipView:[YBIBCopywriter shareCopywriter].getPhotoAlbumAuthorizationFailed];
+            [[UIApplication sharedApplication].keyWindow yb_showForkTipView:[YBIBCopywriter shareCopywriter].getPhotoAlbumAuthorizationFailed];
             if (failed) failed();
             break;
         case PHAuthorizationStatusRestricted:
-            [YBIBGetNormalWindow() yb_showForkTipView:[YBIBCopywriter shareCopywriter].getPhotoAlbumAuthorizationFailed];
+            [[UIApplication sharedApplication].keyWindow yb_showForkTipView:[YBIBCopywriter shareCopywriter].getPhotoAlbumAuthorizationFailed];
             if (failed) failed();
             break;
         case PHAuthorizationStatusNotDetermined: {
@@ -74,9 +76,9 @@
     ALAssetsLibrary *library = [[ALAssetsLibrary alloc] init];
     [library writeImageDataToSavedPhotosAlbum:data metadata:nil completionBlock:^(NSURL *assetURL, NSError *error) {
         if (error) {
-            [YBIBGetNormalWindow() yb_showForkTipView:[YBIBCopywriter shareCopywriter].saveToPhotoAlbumFailed];
+            [[UIApplication sharedApplication].keyWindow yb_showForkTipView:[YBIBCopywriter shareCopywriter].saveToPhotoAlbumFailed];
         } else {
-            [YBIBGetNormalWindow() yb_showHookTipView:[YBIBCopywriter shareCopywriter].saveToPhotoAlbumSuccess];
+            [[UIApplication sharedApplication].keyWindow yb_showHookTipView:[YBIBCopywriter shareCopywriter].saveToPhotoAlbumSuccess];
         }
     }];
 }
@@ -108,9 +110,9 @@
 
 + (void)completedWithImage:(UIImage *)image error:(NSError *)error context:(void *)context {
     if (error) {
-        [YBIBGetNormalWindow() yb_showForkTipView:[YBIBCopywriter shareCopywriter].saveToPhotoAlbumFailed];
+        [[UIApplication sharedApplication].keyWindow yb_showForkTipView:[YBIBCopywriter shareCopywriter].saveToPhotoAlbumFailed];
     } else {
-        [YBIBGetNormalWindow() yb_showHookTipView:[YBIBCopywriter shareCopywriter].saveToPhotoAlbumSuccess];
+        [[UIApplication sharedApplication].keyWindow yb_showHookTipView:[YBIBCopywriter shareCopywriter].saveToPhotoAlbumSuccess];
     }
 }
 
@@ -118,15 +120,15 @@
     if (UIVideoAtPathIsCompatibleWithSavedPhotosAlbum(path)) {
         UISaveVideoAtPathToSavedPhotosAlbum(path, self, @selector(video:didFinishSavingWithError:contextInfo:), nil);
     } else {
-        [YBIBGetNormalWindow() yb_showForkTipView:[YBIBCopywriter shareCopywriter].unableToSave];
+        [[UIApplication sharedApplication].keyWindow yb_showForkTipView:[YBIBCopywriter shareCopywriter].unableToSave];
     }
 }
 
 + (void)video:(NSString *)videoPath didFinishSavingWithError:(NSError *)error contextInfo:(void *)contextInfo{
     if (error) {
-        [YBIBGetNormalWindow() yb_showForkTipView:[YBIBCopywriter shareCopywriter].saveToPhotoAlbumFailed];
+        [[UIApplication sharedApplication].keyWindow yb_showForkTipView:[YBIBCopywriter shareCopywriter].saveToPhotoAlbumFailed];
     } else {
-        [YBIBGetNormalWindow() yb_showHookTipView:[YBIBCopywriter shareCopywriter].saveToPhotoAlbumSuccess];
+        [[UIApplication sharedApplication].keyWindow yb_showHookTipView:[YBIBCopywriter shareCopywriter].saveToPhotoAlbumSuccess];
     }
 }
 

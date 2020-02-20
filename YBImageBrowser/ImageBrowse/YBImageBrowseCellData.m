@@ -27,16 +27,20 @@ static BOOL _shouldDecodeAsynchronously = YES;
     __weak id _downloadToken;
 }
 @property (nonatomic, strong) YBImage *image;
-@property (nonatomic, assign) BOOL    isLoading;
+@property (nonatomic, assign) BOOL    loading;
 @end
 
 @implementation YBImageBrowseCellData
 
 #pragma mark - life cycle
 
++ (void)initialize {
+    _shouldDecodeAsynchronously = !YBIBLowMemory();
+}
+
 - (void)dealloc {
-    if (self->_downloadToken) {
-        [YBIBWebImageManager cancelTaskWithDownloadToken:self->_downloadToken];
+    if (_downloadToken) {
+        [YBIBWebImageManager cancelTaskWithDownloadToken:_downloadToken];
     }
 }
 
@@ -49,15 +53,15 @@ static BOOL _shouldDecodeAsynchronously = YES;
 }
 
 - (void)initVars {
-    self->_maxZoomScale = 0;
-    self->_verticalfillType = YBImageBrowseFillTypeUnknown;
-    self->_horizontalfillType = YBImageBrowseFillTypeUnknown;
-    self->_allowSaveToPhotoAlbum = YES;
-    self->_allowShowSheetView = YES;
+    _maxZoomScale = 0;
+    _verticalfillType = YBImageBrowseFillTypeUnknown;
+    _horizontalfillType = YBImageBrowseFillTypeUnknown;
+    _allowSaveToPhotoAlbum = YES;
+    _allowShowSheetView = YES;
     
-    self->_isCutting = NO;
+    _cutting = NO;
     
-    self->_isLoading = NO;
+    _loading = NO;
 }
 
 #pragma mark - <YBImageBrowserCellDataProtocol>
@@ -66,7 +70,7 @@ static BOOL _shouldDecodeAsynchronously = YES;
     return YBImageBrowseCell.class;
 }
 
-- (id)yb_browserCellSourceObject {
+- (UIView *)yb_browserCellSourceObject {
     return self.sourceObject;
 }
 
@@ -106,11 +110,11 @@ static BOOL _shouldDecodeAsynchronously = YES;
                         });
                     });
                 } else {
-                    [YBIBGetNormalWindow() yb_showForkTipView:[YBIBCopywriter shareCopywriter].unableToSave];
+                    [[UIApplication sharedApplication].keyWindow yb_showForkTipView:[YBIBCopywriter shareCopywriter].unableToSave];
                 }
             }];
         } else {
-            [YBIBGetNormalWindow() yb_showForkTipView:[YBIBCopywriter shareCopywriter].unableToSave];
+            [[UIApplication sharedApplication].keyWindow yb_showForkTipView:[YBIBCopywriter shareCopywriter].unableToSave];
         }
     } failed:nil];
 }
@@ -122,7 +126,7 @@ static BOOL _shouldDecodeAsynchronously = YES;
 #pragma mark - internal
 
 - (void)loadData {
-    if (self.isLoading) {
+    if (self.loading) {
         YBImageBrowseCellDataState tmpState = self.dataState;
         if (self.thumbImage) {
             self.dataState = YBImageBrowseCellDataStateThumbImageReady;
@@ -130,7 +134,7 @@ static BOOL _shouldDecodeAsynchronously = YES;
         self.dataState = tmpState;
         return;
     } else {
-        self.isLoading = YES;
+        self.loading = YES;
     }
     
     if (self.image) {
@@ -146,7 +150,7 @@ static BOOL _shouldDecodeAsynchronously = YES;
         [self loadImageFromPHAsset];
     } else {
         self.dataState = YBImageBrowseCellDataStateInvalid;
-        self.isLoading = NO;
+        self.loading = NO;
     }
 }
 
@@ -155,13 +159,13 @@ static BOOL _shouldDecodeAsynchronously = YES;
     if ([self needCompress]) {
         if (self.compressImage) {
             self.dataState = YBImageBrowseCellDataStateCompressImageReady;
-            self.isLoading = NO;
+            self.loading = NO;
         } else {
             [self compressingImage];
         }
     } else {
         self.dataState = YBImageBrowseCellDataStateImageReady;
-        self.isLoading = NO;
+        self.loading = NO;
     }
 }
 
@@ -203,7 +207,7 @@ static BOOL _shouldDecodeAsynchronously = YES;
         } failed:^{
             YBIB_GET_QUEUE_MAIN_ASYNC(^{
                 self.dataState = YBImageBrowseCellDataStateLoadPHAssetFailed;
-                self.isLoading = NO;
+                self.loading = NO;
             });
         }];
     };
@@ -241,7 +245,7 @@ static BOOL _shouldDecodeAsynchronously = YES;
     if (!self.url) return;
     
     self.dataState = YBImageBrowseCellDataStateIsDownloading;
-    self->_downloadToken = [YBIBWebImageManager downloadImageWithURL:self.url progress:^(NSInteger receivedSize, NSInteger expectedSize, NSURL * _Nullable targetURL) {
+    _downloadToken = [YBIBWebImageManager downloadImageWithURL:self.url progress:^(NSInteger receivedSize, NSInteger expectedSize, NSURL * _Nullable targetURL) {
         CGFloat value = receivedSize * 1.0 / expectedSize ?: 0;
         self->_downloadProgress = value;
         
@@ -267,7 +271,7 @@ static BOOL _shouldDecodeAsynchronously = YES;
     } failed:^(NSError * _Nullable error, BOOL finished) {
         if (!finished) return;
         self.dataState = YBImageBrowseCellDataStateDownloadFailed;
-        self.isLoading = NO;
+        self.loading = NO;
     }];
 }
 
@@ -284,7 +288,6 @@ static BOOL _shouldDecodeAsynchronously = YES;
             } else if (data) {
                 self.thumbImage = [UIImage imageWithData:data];
             }
-            
             // If the target image is ready, ignore the thumb image.
             if (self.dataState != YBImageBrowseCellDataStateCompressImageReady && self.dataState != YBImageBrowseCellDataStateImageReady) {
                 self.dataState = YBImageBrowseCellDataStateThumbImageReady;
@@ -302,7 +305,8 @@ static BOOL _shouldDecodeAsynchronously = YES;
     YBIB_GET_QUEUE_ASYNC(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         UIGraphicsBeginImageContext(size);
         [self.image drawInRect:CGRectMake(0, 0, size.width, size.height)];
-        self->_compressImage = UIGraphicsGetImageFromCurrentImageContext();
+        self.compressImage = UIGraphicsGetImageFromCurrentImageContext();
+        if (!self.compressImage) self.compressImage = self.image;
         UIGraphicsEndImageContext();
         YBIB_GET_QUEUE_MAIN_ASYNC(^{
             self.dataState = YBImageBrowseCellDataStateCompressImageComplete;
@@ -313,16 +317,38 @@ static BOOL _shouldDecodeAsynchronously = YES;
 
 - (void)cuttingImageToRect:(CGRect)rect complete:(void(^)(UIImage *image))complete {
     if (!self.image) return;
-    if (self->_isCutting) return;
+    if (_cutting) return;
+    _cutting = YES;
     
-    self->_isCutting = YES;
-    YBIB_GET_QUEUE_ASYNC(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-        UIImage *resultImg = [self cuttingImageToRect:self.image toRect:rect];
+    //TODO: merge conflict: disabled ours
+//    self->_isCutting = YES;
+//    YBIB_GET_QUEUE_ASYNC(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+//        UIImage *resultImg = [self cuttingImageToRect:self.image toRect:rect];
+    CGFloat zoomScale = self.zoomScale;
+    BOOL (^isCancelled)(void) = ^BOOL{
+        return zoomScale != self.zoomScale;
+    };
+    
+    YBIB_GET_QUEUE_ASYNC(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), (^{
+        
+        CGImageRef cgImage = CGImageCreateWithImageInRect(self.image.CGImage, rect);
+        CGSize size = [self getSizeOfCuttingWithOriginSize:CGSizeMake(CGImageGetWidth(cgImage), CGImageGetHeight(cgImage))];
+        
+        UIImage *tmpImage = [UIImage imageWithCGImage:cgImage];
+        UIGraphicsBeginImageContext(size);
+        [tmpImage drawInRect:CGRectMake(0, 0, size.width, size.height)];
+        UIImage *resultImage = UIGraphicsGetImageFromCurrentImageContext();
+        
+        UIGraphicsEndImageContext();
+        CGImageRelease(cgImage);
+        
         YBIB_GET_QUEUE_MAIN_ASYNC(^{
-            self->_isCutting = NO;
-            if (complete) complete(resultImg);
+            self->_cutting = NO;
+            if (complete && !isCancelled() && resultImage) {
+                complete(resultImage);
+            }
         })
-    })
+    }))
 }
 
 - (UIImage *)cuttingImageToRect:(UIImage *)image toRect:(CGRect)rect {
@@ -443,6 +469,25 @@ static BOOL _shouldDecodeAsynchronously = YES;
     CGFloat scale = [UIScreen mainScreen].scale;
     CGSize size = CGSizeMake(floor(imageViewsize.width * scale), floor(imageViewsize.height * scale));
     return size;
+}
+
+- (CGSize)getSizeOfCuttingWithOriginSize:(CGSize)originSize {
+    CGFloat oWidth = originSize.width, oHeight = originSize.height;
+    CGFloat maxWidth = [UIScreen mainScreen].bounds.size.width, maxHeight = [UIScreen mainScreen].bounds.size.height;
+    if (oWidth < maxWidth && oHeight < maxHeight) {
+        return originSize;
+    }
+    
+    CGFloat rWidth = 0, rHeight = 0;
+    if (oWidth / maxWidth < oHeight / maxHeight) {
+        rHeight = maxHeight;
+        rWidth = oWidth / oHeight * rHeight;
+    } else {
+        rWidth = maxWidth;
+        rHeight = oHeight / oWidth * rWidth;
+    }
+    CGFloat scale = [UIScreen mainScreen].scale;
+    return CGSizeMake(rWidth * scale, rHeight * scale);
 }
 
 #pragma mark - setter

@@ -70,7 +70,7 @@ typedef NS_ENUM(NSInteger, YBImageBrowserTransitionType) {
  */
 - (id<YBImageBrowserCellDataProtocol>)currentData;
 
-/** The default is YES. */
+/** The default is YES. (The default is NO which low memory device.) */
 @property (nonatomic, assign) BOOL shouldPreload;
 
 
@@ -96,6 +96,9 @@ typedef NS_ENUM(NSInteger, YBImageBrowserTransitionType) {
 /** The default is 0.25. */
 @property (nonatomic, assign) NSTimeInterval transitionDuration;
 
+/** Whether the browser is transitioning. */
+@property (nonatomic, assign, readonly) BOOL transitioning;
+
 /** Parameter configuration object for gesture interaction animation. */
 @property (nonatomic, strong) YBIBGestureInteractionProfile *giProfile;
 
@@ -116,7 +119,8 @@ typedef NS_ENUM(NSInteger, YBImageBrowserTransitionType) {
 /** The default is YES. */
 @property (nonatomic, assign) BOOL shouldHideStatusBar;
 
-/** The number of data cache limits, the default is 6. It is effective when using the proxy to configure data sources. If the data cache is overmuch, may lead to excessive memory consumption. */
+/** The number of data cache limits, the default is 8. (The default is 1 which low memory device.)
+ It is effective when using the proxy to configure data sources. If the data cache is overmuch, may lead to excessive memory consumption. */
 @property (nonatomic, assign) NSUInteger dataCacheCountLimit;
 
 // 进入图片浏览器之前的Contrller名称

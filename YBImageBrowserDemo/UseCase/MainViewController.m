@@ -13,6 +13,7 @@
 #import "YBImageBrowserTipView.h"
 #import "YBImageBrowser.h"
 #import <SDWebImage/UIImageView+WebCache.h>
+#import <SDWebImage/SDImageCache.h>
 
 static NSString * const kReuseIdentifierOfMainImageCell = @"kReuseIdentifierOfMainImageCell";
 
@@ -33,7 +34,7 @@ static NSString * const kReuseIdentifierOfMainImageCell = @"kReuseIdentifierOfMa
  'YBImageBrowser' 是图片浏览器的主体类，有两种方式为其赋值数据源：一种是直接设置 'dataSourceArray' 数组属性，一种设置 'dataSource' 代理实现协议方法。
  数据源个体为 'id<YBImageBrowserCellDataProtocol>' 类型，框架默认实现了两个类：'YBImageBrowseCellData'(图片) 和 'YBVideoBrowseCellData'(视频)，你只需要初始化它们并且以数组或者代理的方式赋值给 'YBImageBrowser' 实例变量。
  
- 'YBImageBrowser'is the principal class of a image browser, and there are two ways to assign data sources to it: one is to set the 'dataSourceArray' array property directly, and the other is to set the 'dataSource' proxy and implementation protocol method.
+ 'YBImageBrowser'is the principal class of an image browser, and there are two ways to assign data sources to it: one is to set the 'dataSourceArray' array property directly, and the other is to set the 'dataSource' proxy and implementation protocol method.
  The framework implements two classes by default: 'YBImageBrowseCellData'(image) and 'YBVideoBrowseCellData'(video), you just initialize them and assign them to the 'YBImageBrowser' instance variable in an array or proxy.
  */
 
@@ -204,7 +205,8 @@ static NSString * const kReuseIdentifierOfMainImageCell = @"kReuseIdentifierOfMa
             break;
         case 1: {
             self.dataArray = @[@"localImage0.jpeg",
-                               @"https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1524118803027&di=beab81af52d767ebf74b03610508eb36&imgtype=0&src=http%3A%2F%2Fe.hiphotos.baidu.com%2Fbaike%2Fpic%2Fitem%2F2e2eb9389b504fc2995aaaa1efdde71190ef6d08.jpg",
+                               @"https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1524118914981&di=7fa3504d8767ab709c4fb519ad67cf09&imgtype=0&src=http%3A%2F%2Fimg5.duitang.com%2Fuploads%2Fitem%2F201410%2F05%2F20141005221124_awAhx.jpeg",
+                               @"https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1524118984884&di=7c73ddf9d321ef94a19567337628580b&imgtype=0&src=http%3A%2F%2Fimg5q.duitang.com%2Fuploads%2Fitem%2F201506%2F07%2F20150607185100_XQvYT.jpeg",
                                @"video0.MP4",
                                @"https://aweme.snssdk.com/aweme/v1/playwm/?video_id=v0200ff00000bdkpfpdd2r6fb5kf6m50&line=0.MP4",
                                @"localGifImage0.gif",
@@ -224,7 +226,7 @@ static NSString * const kReuseIdentifierOfMainImageCell = @"kReuseIdentifierOfMa
 - (void)clickClearButton:(UIButton *)sender {
     [[SDImageCache sharedImageCache] clearMemory];
     [[SDImageCache sharedImageCache] clearDiskOnCompletion:^{
-        [YBIBGetNormalWindow() yb_showHookTipView:@"Clear successful"];
+        [[UIApplication sharedApplication].keyWindow yb_showHookTipView:@"Clear successful"];
     }];
 }
 
