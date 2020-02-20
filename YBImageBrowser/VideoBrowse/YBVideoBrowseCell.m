@@ -510,7 +510,7 @@
         case AVAudioSessionRouteChangeReasonNewDeviceAvailable:
             break;
         case AVAudioSessionRouteChangeReasonOldDeviceUnavailable:
-            if (self->_player && self->_isPlaying) {
+            if (self->_player && self->_playing) {
                 //TODO: merge conflict: took ours
                 //                [self->_player pause];
                 [self.actionBar pause];
