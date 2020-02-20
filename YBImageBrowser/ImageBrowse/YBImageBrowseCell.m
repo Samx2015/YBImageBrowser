@@ -374,7 +374,7 @@
     [self hideTailoringImageView];
     [self.contentView yb_hideProgressView];
     [self yb_hideProgressView];
-    self.yb_browserDismissBlock();
+    self.yb_browserDismissBlock(YBImageBrowserDismissTriggerTypeWithClick);
     _gestureInteracting = NO;
 }
 
