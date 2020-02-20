@@ -68,7 +68,7 @@ BOOL YBIBLowMemory(void) {
     static BOOL isIphoneX = NO;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        NSSet *platformSet = [NSSet setWithObjects:@"iPhone10,3", @"iPhone10,6", @"iPhone11,8", @"iPhone11,2", @"iPhone11,4", @"iPhone11,6", @"iPhone12,1",, @"iPhone12,3", @"iPhone12,5" nil];
+        NSSet *platformSet = [NSSet setWithObjects:@"iPhone10,3", @"iPhone10,6", @"iPhone11,8", @"iPhone11,2", @"iPhone11,4", @"iPhone11,6", @"iPhone12,1", @"iPhone12,3", @"iPhone12,5", nil];
         struct utsname systemInfo;
         uname(&systemInfo);
         NSString *platform = [NSString stringWithCString:systemInfo.machine encoding:NSUTF8StringEncoding];
